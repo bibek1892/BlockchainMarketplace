@@ -28,3 +28,38 @@ contract('BlockchainMarketplace',(accounts)=> {
     })
 
 })
+
+
+
+
+
+describe('products', async () => {
+
+    let result, productCount, blockchainmarketplace
+   
+    before(async() => {
+        result = await blockchainmarketplace.createProduct('Macbook pro', web3.utils.toWei('1', 'Ether') )  // price in wei
+        productCount = await blockchainmarketplace.productCount()
+    })
+
+ 
+    it('create products', async () => {
+
+        assert.equal(productCount, 1)
+
+        console.log(result.logs)
+
+    })
+
+})
+
+
+
+
+
+
+
+
+
+
+
