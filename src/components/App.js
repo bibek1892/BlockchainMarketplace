@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import Web3 from 'web3'
-import logo from '../logo.png';
+// import logo from '../logo.png';
 import './App.css';
 import Marketplace from '../abis/BlockchainMarketplace.json'
 import Navbar from './Navbar'
+import Main from './Main'
 
 class App extends Component {
 
@@ -34,7 +35,23 @@ class App extends Component {
     const networkData = Marketplace.networks[networkId]
     if(networkData) {
       const marketplace = web3.eth.Contract(Marketplace.abi, networkData.address)
-      console.log(marketplace)
+      this.setState ({ marketplace })
+      const productCount= await marketplace.methods.productCount().call()
+      this.setState({ productCount })
+
+      //Load products
+
+      for( var i=0; i<=productCount; i++){
+        const product = await marketplace.methods.products(i).call()
+        this.setState({
+          products: [...this.state.products, product]
+
+        })
+
+      }
+
+      this.setState ({ loading: false })
+     
     } else {
       window.alert('BlockchainMarketplace contract not deployed to detected network.')
     }
@@ -48,44 +65,75 @@ class App extends Component {
       products: [],
       loading: true
     }
+
+    this.createProduct = this.createProduct.bind(this)
+    this.purchaseProduct = this.purchaseProduct.bind(this)
   }
+
+  // CREATE A NEW FUNCTION INSIDE OUR COMPONENT TO CREATE PRODUCT
+
+  createProduct(name, price){
+    this.setState({ loading: true })
+    this.state.marketplace.methods.createProduct(name,price).send({ from:this.state.account})
+    .once('receipt', (receipt) => {
+      this.setState({ loading: false })
+
+    })
+  }
+  // Create a new function to purchase product
+  purchaseProduct(id, price){
+     this.setState({
+       loading:true
+     })
+     this.state.marketplace.methods.purchaseProduct(id).send({ from: this.state.account, value: price })
+     .once('receipt',(receipt) => {
+
+      this.setState({loading: false})
+
+     })
+
+
+  }
+
+
 
   render() {
     return (
       <div>
 
         <Navbar account={this.state.account} />
-
         <div className="container-fluid mt-5">
-          <div className="row">
-            <main role="main" className="col-lg-12 d-flex text-center">
-              <div className="content mr-auto ml-auto">
-                <a
-                  href="https://www.facebook.com/blockchainnepal2009"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src={logo} className="App-logo" alt="logo" />
-                </a>
-                <h1>BlockchainMarketplace Starter Kit</h1>
-                <p>
-                  Edit <code>src/components/App.js</code> and save to reload.
-                </p>
-                <a
-                  className="App-link"
-                  href="https://www.facebook.com/blockchainnepal2009"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  LEARN BLOCKCHAIN <u><b>NOW! </b></u>
-                </a>
-              </div>
+          <div className = "row">
+            <main role = "main" className="col-lg-12 d-flex">
+              { this.state.loading 
+                ? <div id= "loader" className="text-center"><p className="text-center">Loading...</p></div>
+                : <Main
+                   products={ this.state.products }  
+                   createProduct={this.createProduct} 
+                   purchaseProduct={this.purchaseProduct} /> 
+              }
+
             </main>
           </div>
         </div>
+
+
+        
       </div>
     );
   }
 }
 
 export default App;
+
+
+
+
+
+
+
+
+
+      
+
+        
